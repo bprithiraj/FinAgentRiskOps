@@ -1,0 +1,16 @@
+{
+  "version": "synthetic-expense-2026-09-v1",
+  "description": "Fictional portfolio policy. Not a real company policy or financial advice.",
+  "rules": {
+    "meal": {"limit_cents": 5000, "chunk_id": "meals-v1-1"},
+    "hotel": {"limit_cents": 18000, "chunk_id": "hotel-v1-1"},
+    "taxi": {"limit_cents": 7500, "chunk_id": "taxi-v1-1"}
+  },
+  "documents": [
+    {"id": "meals-v1", "title": "Business meals", "category": "meal", "text": "A business meal expense up to and including USD 50.00 is within the standard limit. A meal expense above USD 50.00 requires a human exception review. An itemized receipt and a business purpose are required.\n\nAmounts use integer cents. The limit applies to one submitted expense; splitting expenses to evade limits is not permitted."},
+    {"id": "hotel-v1", "title": "Hotel stays", "category": "hotel", "text": "A hotel expense up to and including USD 180.00 is within the standard limit. A hotel expense above USD 180.00 requires a human exception review. An itemized receipt and a business purpose are required.\n\nThis synthetic policy covers one night per expense. Multi-night allocation and foreign currency conversion are outside the supported scope."},
+    {"id": "taxi-v1", "title": "Business taxi journeys", "category": "taxi", "text": "A business taxi expense up to and including USD 75.00 is within the standard limit. A taxi expense above USD 75.00 requires a human exception review. An itemized receipt and a business purpose are required.\n\nTaxi rides must have a documented business purpose. Personal transport is outside the supported scope."},
+    {"id": "receipts-v1", "title": "Receipt requirements", "category": "general", "text": "Every expense requires an itemized receipt. A missing receipt must be routed for additional information before a reviewer can approve an exception. A narrative description does not replace a receipt."},
+    {"id": "review-v1", "title": "Review boundaries", "category": "general", "text": "The assistant provides cited policy evidence and an advisory classification. A human reviewer records an approve, reject, or request-information decision. Recording a decision does not submit a payment, update payroll, or reimburse an expense.\n\nOnly meal, hotel, and taxi expenses in USD are supported. Investment, lending, tax, medical, legal, and real-company policy questions are outside scope."}
+  ]
+}

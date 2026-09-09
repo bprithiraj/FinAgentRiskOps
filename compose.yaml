@@ -1,0 +1,23 @@
+services:
+  api:
+    build: .
+    ports:
+      - "127.0.0.1:8082:8082"
+    environment:
+      FINAGENT_SUBMIT_TOKEN: ${FINAGENT_SUBMIT_TOKEN:?Set a distinct submitter token}
+      FINAGENT_REVIEW_TOKEN: ${FINAGENT_REVIEW_TOKEN:?Set a distinct reviewer token}
+      FINAGENT_REVIEWER: local-reviewer
+      FINAGENT_OLLAMA_URL: http://ollama:11434
+      FINAGENT_MODEL: qwen2.5:0.5b
+      FINAGENT_DATA_DIR: /data
+    volumes:
+      - reviews:/data
+    depends_on:
+      - ollama
+  ollama:
+    image: ollama/ollama:0.33.3
+    volumes:
+      - models:/root/.ollama
+volumes:
+  reviews:
+  models:
