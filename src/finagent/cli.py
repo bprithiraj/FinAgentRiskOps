@@ -41,6 +41,11 @@ def evaluate(args):
                 passed = (
                     result["status"] == required_status
                     and result["assessment"]["recommendation"] == expected
+                    and (
+                        expected == "unsupported"
+                        or result.get("draft", {}).get("summary_origin")
+                        == "deterministic_policy_rules"
+                    )
                 )
                 rows.append(
                     {

@@ -11,7 +11,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command, interrupt
 
 from .process_lock import ProcessLock
-from .retrieval import INJECTION, Corpus
+from .retrieval import Corpus
 from .schemas import DomainError, Draft
 from .store import Store
 
@@ -28,6 +28,20 @@ class State(TypedDict, total=False):
     error: dict
     review: dict
     model: dict
+
+
+def trusted_explanation(expense, assessment):
+    def usd(cents):
+        return f"USD {cents // 100:,}.{cents % 100:02d}"
+
+    amount = usd(expense["amount_cents"])
+    category = expense["category"].strip().lower()
+    if assessment["recommendation"] == "missing_receipt":
+        return f"The {amount} {category} expense has no itemized receipt. Request more information or reject it; approval is blocked."
+    limit = usd(assessment["limit_cents"])
+    if assessment["recommendation"] == "within_policy":
+        return f"The {amount} {category} expense is within the {limit} standard limit. Review the receipt and business purpose before recording a decision."
+    return f"The {amount} {category} expense exceeds the {limit} standard limit. A human exception review is required."
 
 
 class Service:
@@ -105,11 +119,16 @@ class Service:
                 source = sources.get(citation["chunk_id"])
                 if not source or citation["quote"] not in source["text"]:
                     raise ValueError("Citation must quote a retrieved source verbatim")
+                if (
+                    citation["chunk_id"] == state["assessment"]["required_citation"]
+                    and citation["quote"] != source["text"]
+                ):
+                    raise ValueError("The applicable rule must be quoted in full")
                 cited.add(citation["chunk_id"])
             if state["assessment"]["required_citation"] not in cited:
                 raise ValueError("The applicable rule must be cited")
-            if INJECTION.search(draft["summary"]):
-                raise ValueError("Instruction-like model output")
+            draft["summary"] = trusted_explanation(state["expense"], state["assessment"])
+            draft["summary_origin"] = "deterministic_policy_rules"
             return {"draft": draft, "status": "awaiting_review", "model": self.model.metadata()}
         except (ValueError, DomainError) as exc:
             code = exc.code if isinstance(exc, DomainError) else "invalid_evidence"

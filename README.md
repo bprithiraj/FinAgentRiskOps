@@ -1,6 +1,6 @@
 # FinAgent RiskOps
 
-A runnable local assistant for **fictional expense-policy exceptions**. It retrieves versioned policy evidence, asks a local Ollama model for a cited explanation, validates the output, and pauses in a durable LangGraph workflow for an authenticated human decision.
+A runnable local assistant for **fictional expense-policy exceptions**. It retrieves versioned policy evidence, asks a local Ollama model to select exact policy quotes, validates that evidence, constructs an explanation from typed policy facts, and pauses in a durable LangGraph workflow for an authenticated human decision.
 
 The assistant never pays an expense. Its supported scope is one USD meal, taxi journey, or hotel night, using synthetic policy limits. No company data, paid model API, cloud database, or external tracing is required.
 
@@ -8,8 +8,8 @@ The assistant never pays an expense. Its supported scope is one USD meal, taxi j
 
 - Actual paragraph ingestion and SQLite FTS5 retrieval with document/version IDs and SHA-256 provenance.
 - Deterministic policy limits and missing-receipt checks. A language model cannot change these rules.
-- Real Ollama JSON-schema generation; no runtime fake-model fallback.
-- Exact quote and citation membership validation, required-rule coverage, and rejection of extra output fields.
+- Real Ollama JSON-schema evidence selection; arbitrary model narrative is rejected, with no runtime fake-model fallback.
+- Exact quote and citation membership validation, a complete quote of the applicable rule, and rejection of extra output fields.
 - LangGraph `interrupt()` and SQLite checkpoints that survive service restart.
 - Separate submitter/reviewer bearer roles, immutable reviewer identity from configuration, request idempotency, and conflicting-decision rejection.
 - A durable decision ledger and audit entries committed atomically; interrupted graph delivery recovers from that ledger.
@@ -31,7 +31,7 @@ $env:FINAGENT_REVIEWER = 'local-reviewer'
 .\.venv\Scripts\python.exe -m finagent.cli serve --port 8082
 ```
 
-Open [localhost:8082](http://127.0.0.1:8082). Enter the two tokens you configured in the UI. Tokens are held only in page memory. Ollama must be running; on a manual installation start `ollama serve` first. A 0.5B model is a free CPU smoke-test choice, not a quality guarantee; a larger local instruction model may produce more reliable drafts. Changing the model does not weaken validation.
+Open [localhost:8082](http://127.0.0.1:8082). Enter the two tokens you configured in the UI. Tokens are held only in page memory. Ollama must be running; on a manual installation start `ollama serve` first. A 0.5B model is a free CPU smoke-test choice, not a quality guarantee; a larger local instruction model may select evidence more reliably. Changing the model does not weaken validation.
 
 Linux/macOS use `python3 -m venv .venv`, `.venv/bin/python`, and `export NAME=value`. The `.env.example` file documents configuration; the Python service does not load `.env` automatically.
 
@@ -76,7 +76,7 @@ $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
 .\.venv\Scripts\python.exe -m finagent.cli evaluate --output artifacts\local-evaluation.json
 ```
 
-Unit/contract tests use an explicitly named `EvidenceStub` confined to `tests/`. They prove deterministic workflow behavior and failure boundaries; they do **not** measure model quality. The evaluation command calls the actual configured Ollama model over HTTP for eight frozen synthetic acceptance cases, writes raw outputs, timing, corpus hash and model metadata, and exits nonzero on failed acceptance. Unsupported cases are rejected deterministically without a model call. `--limit 1` runs a small smoke test.
+Unit/contract tests use an explicitly named `EvidenceStub` confined to `tests/`. They prove deterministic workflow behavior and failure boundaries; they do **not** measure model quality. The evaluation command calls the actual configured Ollama model over HTTP for eight frozen synthetic acceptance cases, requires a deterministic visible explanation, writes raw outputs, timing, corpus hash and model metadata, and exits nonzero on failed acceptance. Unsupported cases are rejected deterministically without a model call. `--limit 1` runs a small smoke test.
 
 See [VALIDATION.md](VALIDATION.md) for the current verified results and their limits. Dependency versions used for validation are captured in `requirements-lock.txt`; install the lock before `pip install --no-deps -e .` to reproduce that environment. CI uses this lock and runs the deterministic tests on Linux and Windows.
 
@@ -95,7 +95,7 @@ Only `127.0.0.1:8082` is published. Model and workflow volumes persist across re
 
 This is a complete bounded local v1, not a production financial platform. It uses one service process, one SQLite data directory, eight admitted requests at most, and serialized graph execution. An OS lock rejects a second process sharing that directory. Do not run multiple Uvicorn workers. Stop the service before copying both SQLite databases and their WAL files for a backup.
 
-Receipt presence and business purpose are caller-supplied synthetic facts; there is no receipt OCR or fraud verification. There are no embeddings, bank/payment integrations, multi-currency rules, multi-tenant authorization, or distributed job workers. Model narratives can still be wrong even when their quotes are valid. Prompt-injection pattern checks are only an extra filter; the actual boundaries are no model-selected executable tools, schema validation, exact evidence checks, deterministic rules, and human review. Do not treat this small evaluation set as general prompt-injection immunity.
+Receipt presence and business purpose are caller-supplied synthetic facts; there is no receipt OCR or fraud verification. There are no embeddings, bank/payment integrations, multi-currency rules, multi-tenant authorization, or distributed job workers. The first real evaluation demonstrated that a model can produce false narrative even beside correct quotes. This release therefore accepts only evidence selection from the model and computes the visible explanation from typed amount, receipt, category, and policy facts. Prompt-injection pattern checks are only an extra filter; the enforced boundaries are no model-selected executable tools, no model narrative fields, schema validation, complete applicable-rule quotes, deterministic rules, and human review. Do not treat this small evaluation set as general prompt-injection immunity.
 
 Policies are administrator-controlled source files, not user uploads. Editing existing content requires a new policy version. Existing reviews retain their original evidence snapshots; they are not silently migrated to new policies. Shared local role tokens permit reading any known review ID; use real identity, ownership checks, HTTPS, key rotation, storage encryption and a deployment threat model before any multi-user deployment.
 

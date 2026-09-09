@@ -25,7 +25,6 @@ class Citation(StrictModel):
 
 class Draft(StrictModel):
     recommendation: Literal["within_policy", "exception_required", "missing_receipt"]
-    summary: str = Field(min_length=5, max_length=800)
     citations: list[Citation] = Field(min_length=1, max_length=6)
 
 

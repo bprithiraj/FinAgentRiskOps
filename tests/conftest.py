@@ -14,7 +14,6 @@ class EvidenceStub:
         source = next(c for c in evidence if c["id"] == assessment["required_citation"])
         return {
             "recommendation": assessment["recommendation"],
-            "summary": "The applicable synthetic expense policy is quoted for human review.",
             "citations": [{"chunk_id": source["id"], "quote": source["text"]}],
         }
 

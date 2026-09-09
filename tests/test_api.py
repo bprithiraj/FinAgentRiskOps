@@ -78,7 +78,6 @@ def test_ollama_adapter_contract(monkeypatch):
     original = httpx.Client
     draft = {
         "recommendation": "exception_required",
-        "summary": "A human exception review is required.",
         "citations": [
             {
                 "chunk_id": "meals-v1-1",
